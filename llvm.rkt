@@ -158,57 +158,7 @@
   `((proc (main) ,main-body) . ,procs))
 
 ; Extra header for LLVM files that contains closure-processing functions
-(define llvm-header "define i64 @make_clo(i64*, i64) #0 {\n\
-  %3 = alloca i64*, align 8\n\
-  %4 = alloca i64, align 8\n\
-  %5 = alloca i64*, align 8\n\
-  store i64* %0, i64** %3, align 8\n\
-  store i64 %1, i64* %4, align 8\n\
-  %6 = call i8* @_Znam(i64 16) #3\n\
-  %7 = bitcast i8* %6 to i64*\n\
-  store i64* %7, i64** %5, align 8\n\
-  %8 = load i64*, i64** %3, align 8\n\
-  %9 = ptrtoint i64* %8 to i64\n\
-  %10 = load i64*, i64** %5, align 8\n\
-  %11 = getelementptr inbounds i64, i64* %10, i64 0\n\
-  store i64 %9, i64* %11, align 8\n\
-  %12 = load i64, i64* %4, align 8\n\
-  %13 = load i64*, i64** %5, align 8\n\
-  %14 = getelementptr inbounds i64, i64* %13, i64 1\n\
-  store i64 %12, i64* %14, align 8\n\
-  %15 = load i64*, i64** %5, align 8\n\
-  %16 = ptrtoint i64* %15 to i64\n\
-  ret i64 %16\n\
-}\n\
-\n\
-define i64* @get_clo_func(i64) #2 {\n\
-  %2 = alloca i64, align 8\n\
-  %3 = alloca i64*, align 8\n\
-  store i64 %0, i64* %2, align 8\n\
-  %4 = load i64, i64* %2, align 8\n\
-  %5 = and i64 %4, -8\n\
-  %6 = inttoptr i64 %5 to i64*\n\
-  store i64* %6, i64** %3, align 8\n\
-  %7 = load i64*, i64** %3, align 8\n\
-  %8 = getelementptr inbounds i64, i64* %7, i64 0\n\
-  %9 = load i64, i64* %8, align 8\n\
-  %10 = inttoptr i64 %9 to i64*\n\
-  ret i64* %10\n\
-}\n\
-\n\
-define i64 @get_clo_env(i64) #2 {\n\
-  %2 = alloca i64, align 8\n\
-  %3 = alloca i64*, align 8\n\
-  store i64 %0, i64* %2, align 8\n\
-  %4 = load i64, i64* %2, align 8\n\
-  %5 = and i64 %4, -8\n\
-  %6 = inttoptr i64 %5 to i64*\n\
-  store i64* %6, i64** %3, align 8\n\
-  %7 = load i64*, i64** %3, align 8\n\
-  %8 = getelementptr inbounds i64, i64* %7, i64 1\n\
-  %9 = load i64, i64* %8, align 8\n\
-  ret i64 %9\n\
-}\n")
+(define llvm-header "")
 
 (define (proc->llvm procs)
   (define (symbol->llvm-val sym)
