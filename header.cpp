@@ -270,6 +270,12 @@ u64 prim_print(u64 v)
 {
     if (v == V_NULL)
         printf("'()");
+	else if (v == V_TRUE)
+		printf("#t");
+	else if (v == V_FALSE)
+		printf("#f");
+	else if (v == V_VOID)
+		printf("#<void>");
     else if ((v&7) == CLO_TAG)
         printf("#<procedure>");
     else if ((v&7) == CONS_TAG)
@@ -601,39 +607,24 @@ u64 prim__47(u64 a, u64 b) // /
     
     return ENCODE_INT(DECODE_INT(a) / DECODE_INT(b));
 }
-    
-u64 prim__61(u64 a, u64 b)  // =
-{
-    ASSERT_TAG(a, INT_TAG, "(prim = a b); a is not an integer")
-    ASSERT_TAG(b, INT_TAG, "(prim = a b); b is not an integer")
-        
-    if ((s32)((a&(7ULL^MASK64)) >> 32) == (s32)((b&(7ULL^MASK64)) >> 32))
-        return V_TRUE;
-    else
-        return V_FALSE;
-}
 
-u64 prim__60(u64 a, u64 b) // <
-{
-    ASSERT_TAG(a, INT_TAG, "(prim < a b); a is not an integer")
-    ASSERT_TAG(b, INT_TAG, "(prim < a b); b is not an integer")
-    
-    if ((s32)((a&(7ULL^MASK64)) >> 32) < (s32)((b&(7ULL^MASK64)) >> 32))
-        return V_TRUE;
-    else
-        return V_FALSE;
-}
-    
-u64 prim__60_61(u64 a, u64 b) // <=
-{
-    ASSERT_TAG(a, INT_TAG, "(prim <= a b); a is not an integer")
-    ASSERT_TAG(b, INT_TAG, "(prim <= a b); b is not an integer")
-        
-    if ((s32)((a&(7ULL^MASK64)) >> 32) <= (s32)((b&(7ULL^MASK64)) >> 32))
-        return V_TRUE;
-    else
-        return V_FALSE;
-}
+#define GEN_BOOLEAN_OPERATOR(op,name) \
+	u64 name(u64 a, u64 b) \
+	{ \
+		ASSERT_TAG(a, INT_TAG, "(prim < a b); a is not an integer") \
+		ASSERT_TAG(b, INT_TAG, "(prim < a b); b is not an integer") \
+		if ((s32)((a&(7ULL^MASK64)) >> 32) op (s32)((b&(7ULL^MASK64)) >> 32)) \
+			return V_TRUE; \
+		else \
+			return V_FALSE; \
+	} \
+	GEN_EXPECT2ARGLIST(apply ## name, name)
+
+GEN_BOOLEAN_OPERATOR(==, prim__61)
+GEN_BOOLEAN_OPERATOR(<, prim__60)
+GEN_BOOLEAN_OPERATOR(<=, prim__60_61)
+GEN_BOOLEAN_OPERATOR(>, prim__62)
+GEN_BOOLEAN_OPERATOR(>=, prim__62_61)
 
 u64 prim_not(u64 a) 
 {
@@ -644,6 +635,29 @@ u64 prim_not(u64 a)
 }
 GEN_EXPECT1ARGLIST(applyprim_not, prim_not)
 
+
+///// closure utilities
+
+
+u64 make_clo(u64* f, u64 env)
+{
+    u64* c = new u64[2];
+    c[0] = (u64) f;
+    c[1] = env;
+    return ENCODE_CLO(c);
+}
+
+u64* get_clo_func(u64 c)
+{
+	u64* cc = DECODE_CLO(c);
+	return (u64*) cc[0];
+}
+
+u64 get_clo_env(u64 c)
+{
+	u64* cc = DECODE_CLO(c);
+	return cc[1];
+}
 
 
 }
