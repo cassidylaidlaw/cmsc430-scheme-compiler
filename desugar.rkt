@@ -327,7 +327,7 @@
 (define (desugar e)
   (define (wrap e)
     `(let* ([promise? (lambda (p) (and (cons? p) (eq? (car p) (quote %%promise))))]
-            [%raise-handler '()]
+            [%raise-handler (lambda (e) (begin (list 'uncaught-exception e)))]
             [%wind-stack '()]
             [%common-tail (lambda (x y)
                             (let ((lx (length x))

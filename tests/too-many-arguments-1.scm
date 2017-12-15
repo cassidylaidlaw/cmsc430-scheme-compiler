@@ -1,0 +1,5 @@
+(map (lambda (f) (map (lambda (l) (guard (e [else 'wrong-number]) (apply f l))) '((1) (1 2) (1 2 3) (1 2 3 4))))
+     (list (lambda x (apply + x))
+           (lambda (x y . z) (cons y (cons x z)))
+           (lambda (x [y 7] [z 8]) (* x y z))
+           (lambda (x y) (- x y))))

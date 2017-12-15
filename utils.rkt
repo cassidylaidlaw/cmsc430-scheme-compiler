@@ -15,6 +15,7 @@
          eval-ir
          eval-proc
          eval-llvm
+         map-exps
          simplify-ir
          scheme-exp?
          ir-exp?
@@ -267,6 +268,94 @@
          [`(apply-prim ,(? prim?) ,(? (rec/with env))) #t]
          [`(,(? (rec/with env)) ,(? (rec/with env)) ...) #t]
          [else (pretty-print `(bad-ir ,e ,env)) #f]))
+
+
+(define (map-exps f e [fm (lambda (l) (map f l))])
+  (define (let-form? s)
+    (case s
+      [(let let* letrec letrec*) #t]
+      [else #f]))
+  (define (map-let-clauses f xs es)
+    (map (lambda (x e) `(,x ,(f e))) xs es))
+  (define (map-cond-clauses f clauses)
+    (map (lambda (clause)
+           (match clause
+             [`(else ,es ...)
+              `(else ,@(fm es))]
+             [`(,e0 ,es ...)
+              `(,(f e0) ,@(fm es))]))
+         clauses))
+  (define (map-case-clauses f clauses)
+    (map (lambda (clause)
+           (match-define `(,dats ,es ...) clause)
+           `(,dats ,@(fm es)))
+         clauses))
+  (match e
+    [`(define ,(? symbol? x) ,e0)
+     `(define ,x ,(f e0))]
+    [`(define (,x0 (? symbol? xs) ... [,xds ,eds] ...) ,es ...)
+     `(define (,x0 @xs ,@(map-let-clauses xds eds))
+        ,@(fm es))]
+    [`(define (,x0 ,xs ...) ,es ...)
+     `(define (,x0 ,@xs) ,@(fm es))]
+    [`(,(? let-form? let-form) ([,xs ,e0s] ...) ,e1s ...)
+     `(,let-form ,(map-let-clauses f xs e0s)
+                 ,@(fm e1s))]
+    [`(let ,x ([,xs ,e0s] ...) ,e1s ...)
+     `(let ,x ,(map-let-clauses f xs e0s) ,@(fm e1s))]
+    [`(lambda (,(? symbol? xs) ... [,xds ,eds] ...) ,es ...)
+     `(lambda (,@xs ,@(map-let-clauses f xds eds))
+        ,@(fm es))]
+    [`(lambda ,xs ,es ...)
+     `(lambda ,xs ,@(fm es))]
+    [`(dynamic-wind ,e0 ,e1 ,e2)
+     `(dynamic-wind ,(f e0) ,(f e1) ,(f e2))]
+    [`(guard (,(? symbol? x) ,clauses ...) ,es ...)
+     `(guard (,x ,@(map-cond-clauses f clauses)) ,@(fm es))]
+    [`(raise ,e0)
+     `(raise ,(f e0))]
+    [`(delay ,e0)
+     `(delay ,(f e0))]
+    [`(force ,e0)
+     `(force ,(f e0))]
+    [`(and ,es ...)
+     `(and ,@(map f es))]
+    [`(or ,es ...)
+     `(or ,@(map f es))]
+    [`(match ,e0 ,clauses ...)
+     `(match ,(f e0) ,@(map-case-clauses f clauses))] ; TODO: not quite right b/c could contain expressions
+    [`(cond ,clauses ...)
+     `(cond ,@(map-cond-clauses f clauses))]
+    [`(case ,e0 ,clauses ...)
+     `(case ,(f e0) ,@(map-case-clauses f clauses))]
+    [`(if ,e0 ,e1 ,e2)
+     `(if ,(f e0) ,(f e1) ,(f e2))]
+    [`(when ,e0 ,es ...)
+     `(when ,(f e0) ,@(fm es))]
+    [`(unless ,e0 ,es ...)
+     `(unless ,(f e0) ,@(fm es))]
+    [`(set! ,(? symbol? x) ,e0)
+     `(set! ,x ,(f e0))]
+    [`(begin ,es ...)
+     `(begin ,@(map f es))]
+    [`(call/cc ,e0)
+     `(call/cc ,(f e0))]
+    [(? symbol? x)
+     x]
+    [`(quasiquote ,qq)
+     e] ; TODO: not quite right because qq could contain expressions but okay b/c it's desugared first
+    [`(quote ,dat)
+     `(quote ,dat)]
+    [(? number? n)
+     n]
+    [(? string? s)
+     s]
+    [(? boolean? b)
+     b]
+    [`(apply ,e0 ,e1)
+     `(apply ,(f e0) ,(f e1))]
+    [`(,es ...)
+     (map f es)]))
 
 
 (define (simplify-ir ir-e)

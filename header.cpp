@@ -692,6 +692,8 @@ u64 make_clo(u64* f, u64 env)
 
 u64* get_clo_func(u64 c)
 {
+    ASSERT_TAG(c, CLO_TAG, "trying to apply a value that is not a procedure")
+	
 	u64* cc = DECODE_CLO(c);
 	return (u64*) cc[0];
 }
