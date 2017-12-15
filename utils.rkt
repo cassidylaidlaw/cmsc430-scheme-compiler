@@ -7,6 +7,7 @@
          prim-applyname
          datum?
          read-begin
+         test-compile
          test-top-level
          test-desugar
          eval-top-level
@@ -187,6 +188,19 @@
 
 
 
+(define (test-compile compile top-level-e)
+  (define val1 (eval-top-level top-level-e))
+  (define llvm (compile top-level-e))
+  (define val2 (eval-llvm llvm))
+  (if (equal? val1 val2)
+      #t
+      (begin
+        (display (format "Test-compile: two different values (~a and ~a) before and after compiling\n"
+                         val1 val2))
+        #f)))
+
+
+
 (define (eval-top-level e)
   (racket-compile-eval e))
 
@@ -296,7 +310,7 @@
            [`(prim - ,e0 ,es ...)
             #:when (> (length es) 1)
             (T `(prim - (prim - ,e0 ,@(drop-right es 1)) ,(last es)))]
-           [`(prim / ,e0 ,e1)
+           [`(prim ,(or '/ 'quotient) ,e0 ,e1)
             `(prim / ,(T e0) ,(T e1))]
 
            ; Remove list, vector->apply vector, map foldl, foldr, drop, memv, >, >=, ...

@@ -1,9 +1,13 @@
 
-
 //#include "gc.h"    // Add back in and change tags if we want to use GC
 #include "stdio.h"
 #include "stdlib.h"
 #include "stdint.h"
+
+
+// prevent lots of warnings from format differences between Linux and Mac OS
+#pragma GCC diagnostic ignored "-Wformat"
+
 
 #define CLO_TAG 0
 #define CONS_TAG 1
@@ -223,6 +227,12 @@ u64 prim_print_aux(u64 v)
 {
     if (v == V_NULL)
         printf("()");
+	else if (v == V_TRUE)
+		printf("#t");
+	else if (v == V_FALSE)
+		printf("#f");
+	else if (v == V_VOID)
+		printf(",(void)");
     else if ((v&7) == CLO_TAG)
         printf("#<procedure>");
     else if ((v&7) == CONS_TAG)
@@ -275,7 +285,7 @@ u64 prim_print(u64 v)
 	else if (v == V_FALSE)
 		printf("#f");
 	else if (v == V_VOID)
-		printf("#<void>");
+		printf("(void)");
     else if ((v&7) == CLO_TAG)
         printf("#<procedure>");
     else if ((v&7) == CONS_TAG)
@@ -388,6 +398,21 @@ u64 prim_vector_45set_33(u64 a, u64 i, u64 v)
     return V_VOID;
 }
 GEN_EXPECT3ARGLIST(applyprim_vector_45set_33, prim_vector_45set_33)
+
+
+u64 prim_vector_63(u64 a)
+{
+	if((a&7) == OTHER_TAG) {
+		if ((((u64*)DECODE_OTHER(a))[0]&7) == VECTOR_OTHERTAG) {
+			return V_TRUE;
+		} else {
+			return V_FALSE;
+		}
+	} else {
+		return V_FALSE;
+	}
+}
+GEN_EXPECT1ARGLIST(applyprim_vector_63, prim_vector_63)
 
 
 ///// void, ...
