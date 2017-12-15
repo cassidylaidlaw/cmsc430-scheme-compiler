@@ -12,6 +12,7 @@
 
 (define passes (list handle-wrong-arity
                      top-level
+                     handle-nonprocedure-application
                      desugar
                      simplify-ir
                      assignment-convert

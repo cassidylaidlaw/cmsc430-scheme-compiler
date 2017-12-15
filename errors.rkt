@@ -42,7 +42,26 @@
     [else
      (map-exps handle-wrong-arity e)]))
 
-(define (handle-nonprocedure-application e) e)
+; run before desugar
+(define (handle-nonprocedure-application e)
+  (match e
+    [(or (cons (? (one-of/c 'letrec* 'letrec 'let* 'guard 'raise 'dynamic-wind 'delay 'force 'cond
+                            'case 'and 'or 'begin 'let 'if 'when 'unless 'lambda 'quote 'apply 'prim
+                            'call/cc 'let/cc 'apply-prim 'set!)) _)
+         (? symbol?))
+     (map-exps handle-nonprocedure-application e)]
+    [`(apply ,e0 ,e1)
+     (define proc-sym (gensym 'proc))
+     `(let ([,proc-sym ,e0])
+        (if (prim procedure? ,proc-sym)
+            ,(map-exps handle-nonprocedure-application `(apply ,proc-sym ,e1))
+            (raise '(error nonprocedure-application))))]
+    [`(,e0 ,es ...)
+     (define proc-sym (gensym 'proc))
+     `(let ([,proc-sym ,e0])
+        (if (prim procedure? ,proc-sym)
+            ,(map-exps handle-nonprocedure-application `(,proc-sym ,@es))
+            (raise '(error nonprocedure-application))))]))
 
 (define (handle-zero-division e) e)
 

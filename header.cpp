@@ -441,7 +441,9 @@ u64 prim_void()
     return V_VOID;
 }
 
-
+u64 applyprim_void(u64 a) {
+	return V_VOID;
+}
     
 
 
