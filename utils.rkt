@@ -43,9 +43,9 @@
         clang++-path-submit-server
         "clang++")))
 
-(define prims-list '(= > < <= >= + - * / add1 quotient
+(define prims-list '(= > < <= >= + - * / quotient
                      cons? null? cons car cdr list first second third fourth fifth list
-                     length list-tail drop take member memv map append foldl foldr
+                     length drop take memv map append foldl foldr
                      vector? vector make-vector vector-ref vector-set! vector-length
                      string-length substring string->symbol symbol->string string-append
                      set set->list list->set set-add set-union set-count set-first set-rest set-remove

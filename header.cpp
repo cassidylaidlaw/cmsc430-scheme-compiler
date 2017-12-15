@@ -232,7 +232,7 @@ u64 prim_print_aux(u64 v)
 	else if (v == V_FALSE)
 		printf("#f");
 	else if (v == V_VOID)
-		printf(",(void)");
+		printf("#<void>");
     else if ((v&7) == CLO_TAG)
         printf("#<procedure>");
     else if ((v&7) == CONS_TAG)
@@ -262,10 +262,12 @@ u64 prim_print_aux(u64 v)
         printf("#(");
         u64* vec = (u64*)DECODE_OTHER(v);
         u64 len = vec[0] >> 3;
-        prim_print_aux(vec[1]);
+        if (len > 0) {
+        	prim_print_aux(vec[1]);
+        }
         for (u64 i = 2; i <= len; ++i)
         {
-            printf(",");
+            printf(" ");
             prim_print_aux(vec[i]);
         }
         printf(")");
@@ -285,7 +287,7 @@ u64 prim_print(u64 v)
 	else if (v == V_FALSE)
 		printf("#f");
 	else if (v == V_VOID)
-		printf("(void)");
+		printf("#<void>");
     else if ((v&7) == CLO_TAG)
         printf("#<procedure>");
     else if ((v&7) == CONS_TAG)
@@ -315,10 +317,12 @@ u64 prim_print(u64 v)
         printf("#(");
         u64* vec = (u64*)DECODE_OTHER(v);
         u64 len = vec[0] >> 3;
-        prim_print(vec[1]);
+        if (len > 0) {
+        	prim_print(vec[1]);
+        }
         for (u64 i = 2; i <= len; ++i)
         {
-            printf(",");
+            printf(" ");
             prim_print(vec[i]);
         }
         printf(")");
@@ -398,6 +402,20 @@ u64 prim_vector_45set_33(u64 a, u64 i, u64 v)
     return V_VOID;
 }
 GEN_EXPECT3ARGLIST(applyprim_vector_45set_33, prim_vector_45set_33)
+
+
+u64 prim_vector_45length(u64 v)
+{
+    ASSERT_TAG(v, OTHER_TAG, "first argument to vector-length must be a vector")
+
+    if ((((u64*)DECODE_OTHER(v))[0]&7) != VECTOR_OTHERTAG)
+        fatal_err("vector-length not given a properly formed vector");
+
+    u64* vec = (u64*)DECODE_OTHER(v);
+    u64 len = vec[0] >> 3;
+    return ENCODE_INT(len);
+}
+GEN_EXPECT1ARGLIST(applyprim_vector_45length, prim_vector_45length)
 
 
 u64 prim_vector_63(u64 a)
