@@ -63,7 +63,17 @@
             ,(map-exps handle-nonprocedure-application `(,proc-sym ,@es))
             (raise '(error nonprocedure-application))))]))
 
-(define (handle-zero-division e) e)
+; run before handle-wrong-arity
+(define (handle-zero-division e)
+  (match e
+    [(or '/ 'quotient)
+     '(lambda (numer denom0 . denoms)
+        (let ([denom (prim * denom0 (apply-prim * denoms))])
+          (if (= '0 denom)
+              (raise '(error zero-division))
+              (prim / numer denom))))]
+    [else
+     (map-exps handle-zero-division e)]))
 
 (define (handle-letrec-uninitialized e)
   e)

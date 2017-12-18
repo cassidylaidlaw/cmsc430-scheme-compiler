@@ -10,7 +10,8 @@
 (require (only-in "closure-convert.rkt" closure-convert))
 (require (only-in "llvm.rkt" proc->llvm))
 
-(define passes (list handle-wrong-arity
+(define passes (list handle-zero-division
+                     handle-wrong-arity
                      top-level
                      handle-nonprocedure-application
                      desugar
