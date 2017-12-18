@@ -1,0 +1,6 @@
+(map (lambda (thunk) (guard (e [else 'error]) (thunk)))
+     (list (lambda () (define (x) y) (define y x) (procedure? ((x))))
+           (lambda () (letrec ([a 5] [b a]) b))
+           (lambda () (letrec* ([a 5] [b a]) b))
+           (lambda () (letrec ([a (letrec ([b c]) b)] [c 3]) a))
+           (lambda () (letrec ([a (lambda () (letrec ([b c]) b))] [c '3]) (a)))))

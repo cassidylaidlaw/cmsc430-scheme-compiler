@@ -1,6 +1,7 @@
 #lang racket
 
 (require "utils.rkt")
+(require (only-in "desugar.rkt" letrec-uninitialized-tag))
 
 (provide handle-wrong-arity
          handle-nonprocedure-application
@@ -50,18 +51,20 @@
                             'call/cc 'let/cc 'apply-prim 'set!)) _)
          (? symbol?))
      (map-exps handle-nonprocedure-application e)]
-    [`(apply ,e0 ,e1)
+    [`(apply ,(? (not/c prim?) e0) ,e1)
      (define proc-sym (gensym 'proc))
      `(let ([,proc-sym ,e0])
         (if (prim procedure? ,proc-sym)
             ,(map-exps handle-nonprocedure-application `(apply ,proc-sym ,e1))
             (raise '(error nonprocedure-application))))]
-    [`(,e0 ,es ...)
+    [`(,(? (not/c prim?) e0) ,es ...)
      (define proc-sym (gensym 'proc))
      `(let ([,proc-sym ,e0])
         (if (prim procedure? ,proc-sym)
             ,(map-exps handle-nonprocedure-application `(,proc-sym ,@es))
-            (raise '(error nonprocedure-application))))]))
+            (raise '(error nonprocedure-application))))]
+    [else
+     (map-exps handle-nonprocedure-application e)]))
 
 ; run before handle-wrong-arity
 (define (handle-zero-division e)
@@ -75,5 +78,21 @@
     [else
      (map-exps handle-zero-division e)]))
 
+; run before desugar
 (define (handle-letrec-uninitialized e)
-  e)
+  (define ((wrap-references letrec-vars) e)
+    (match e
+      [`(,(? (one-of/c 'letrec 'letrec*) letrec-tag) ([,xs ,es] ...) ,e0)
+       (define letrec-vars+ (set-union letrec-vars (list->set xs)))
+       (define es+ (map (wrap-references letrec-vars+) es))
+       (define e0+ ((wrap-references letrec-vars) e0))
+       `(,letrec-tag ,(map list xs es+) ,e0+)]
+      [(? symbol? x)
+       (if (set-member? letrec-vars x)
+           `(if (eq? ,x ',letrec-uninitialized-tag)
+                (raise '(error uninitialized-variable))
+                ,x)
+           x)]
+      [else
+       (map-exps (wrap-references letrec-vars) e)]))
+  ((wrap-references (set)) e))

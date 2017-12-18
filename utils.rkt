@@ -293,8 +293,8 @@
   (match e
     [`(define ,(? symbol? x) ,e0)
      `(define ,x ,(f e0))]
-    [`(define (,x0 (? symbol? xs) ... [,xds ,eds] ...) ,es ...)
-     `(define (,x0 @xs ,@(map-let-clauses xds eds))
+    [`(define (,x0 ,(? symbol? xs) ... [,xds ,eds] ...) ,es ...)
+     `(define (,x0 ,@xs ,@(map-let-clauses f xds eds))
         ,@(fm es))]
     [`(define (,x0 ,xs ...) ,es ...)
      `(define (,x0 ,@xs) ,@(fm es))]
@@ -779,6 +779,7 @@
                                (namespace-require 'rnrs)
                                (namespace-require 'racket)
                                (namespace-require 'srfi/34)
+                               (namespace-require '(only rnrs letrec))
                                (eval (compile
                                       `(call/cc (lambda (exit+)
                                                   (define (halt x) (exit+ x))

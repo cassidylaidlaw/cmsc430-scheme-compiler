@@ -1,10 +1,11 @@
 #lang racket
 
-(provide desugar)
+(provide desugar
+         letrec-uninitialized-tag)
 
 (require "utils.rkt")
 
-
+(define letrec-uninitialized-tag (gensym 'uninitialized))
 
 (define (prefix x)
   (if (equal? "$" (substring (symbol->string x) 0 1))
@@ -18,7 +19,7 @@
   (match e
          [`(,xletrec* ([,xs ,es] ...) ,e0)
           (t-desugar
-            `(%%let ,(map list xs (map (lambda (x) ''()) xs))
+            `(%%let ,(map list xs (map (lambda (x) `',letrec-uninitialized-tag) xs))
                (%%begin
                  ,@(map (lambda (x e) `(%%set! ,x ,e)) xs es)
                  ,e0))
@@ -29,7 +30,7 @@
          [`(,xletrec ([,xs ,es] ...) ,e0)
           (define ts (map (lambda (x) (gensym 'letrec)) xs))
           (t-desugar
-            `(%%let ,(map list xs (map (lambda (x) ''()) xs))
+            `(%%let ,(map list xs (map (lambda (x) `',letrec-uninitialized-tag) xs))
                (%%let ,(map list ts es)
                  (%%begin
                    ,@(map (lambda (x t) `(%%set! ,x ,t)) xs ts)

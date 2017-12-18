@@ -14,6 +14,7 @@
                      handle-wrong-arity
                      top-level
                      handle-nonprocedure-application
+                     handle-letrec-uninitialized
                      desugar
                      simplify-ir
                      assignment-convert
