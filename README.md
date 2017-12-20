@@ -17,6 +17,7 @@ To build the compiler and run the provided tests, do the following:
     Test and-or passed.
     ...
     ```
+    You can also see all the available tests by running `racket tests.rkt` or run a specific test by running `racket tests.rkt <test-name>`.
 
 ## Features
 
@@ -145,6 +146,12 @@ Takes a string and one or two integers. A substring is taken starting at the nth
 
 Takes any number of strings and appends them together, returning the concatenated result.
 
+```
+(equal? s1 s2) -> boolean
+```
+
+Takes two strings and determines if they contain the same character sequence.
+
 #### Lists and cons cells
 
 ```
@@ -259,7 +266,104 @@ Prints the given value to stdout using S-expression syntax.
 
 Prints the given value and halts the program.
 
-## How it works
+### Runtime errors
+
+The compiler allows programs to handle a variety of runtime errors, which are summarized below. All errors are raised as a list of the format `'(error ...)`, which can be caught using a `guard` statement.
+
+#### Incorrect arity
+
+Applying a procedure to an invalid number of arguments will raise one of two exceptions, either:
+
+1. `'(error too-few-arguments)` if there are not enough arguments for the procedure.
+2. `'(error too-many-arguments)` if there are too many arguments for the procedure.
+
+#### Nonprocedure application
+
+Applying a value that is not a procedure will raise the exception `'(error nonprocedure-application)`.
+
+#### Division by zero
+
+Dividing by zero using `/` or `quotient` will raise the exception `'(error zero-division)`.
+
+#### Evaluating an unitialized variable
+
+Evaluating an unitialized binding from `letrec` or `letrec*` will raise the exception `'(error uninitialized-variable)`.
+
+## Notes on the final project
+
+This section contains notes specific to how the various parts of the final project for CMSC430 were implemented.
+
+### Part 1: "piecing it together"
+
+For this part, I created a file `compile.rkt` which contains a procedure `(compile e)` which takes an expression e and compiles it to LLVM. Arbitrary programs can by compiled an executed by running `(eval-llvm (compile ...))`.
+
+I modified `tests.rkt` from one of the previous projects to look for tests in the `tests/` directory of the project folder. The included tests are from the given ones for the final project as well as previous projects and a number of my own tests. See the section "building and testing" for details about how to run the tests.
+
+Finally, I wrote this documentation for the types and primitives that the compiler supports!
+
+### Part 2: "run-time errors"
+
+See the section "runtime errors" for the supported runtime errors. Here I have additional implementation details about how the errors are handled. Each of the classes of errors is handled by a pass of the compiler defined in `errors.rkt`.
+
+I also wrote a number of tests for the runtime error handling:
+
+```
+too-few-arguments-0
+too-few-arguments-1
+too-many-arguments-0
+too-many-arguments-1
+nonprocedure-application-0
+nonprocedure-application-1
+zero-division-0
+zero-division-1
+uninitialized-0
+uninitialized-1
+```
+
+#### Incorrect arity
+
+These errors are handled by the pass `handle-wrong-arity`. The pass essentially wraps all lambdas in a few conditionals to check if the number of arguments is within the correct bounds; otherwise it raises an exception. This pass is run before `top-level`. The bounds are calculated as follows:
+
+1. `(lambda x ...)` can take any number of arguments.
+2. `(lambda (x y ...) ...)` must take exactly the number of arguments specified.
+3. `(lambda (x y ... [z ...] ...) ...)` must take a number of arguments between the number of required arguments and the total number of required and optional arguments.
+4. `(lambda (x y ... . z) ...)` must take at least the number of positional arguments.
+
+#### Nonprocedure application
+
+These errors are handled by the pass `handle-nonprocedure-application`, which is run immediately after `top-level`. This pass wraps all procedure applications in a conditional which uses the `procedure?` predicate to determine if the applied value is a procedure. If it isn't, it raises the exception.
+
+#### Zero division
+
+These arrors are handled by the pass `handle-zero-division`, which is run at the very beginning of compilation. This wraps all calls to the `/` and `quotient` prims in a conditional that makes sure that the denominator is nonzero before performing the division. If the denominator is zero, then it raises the exception.
+
+#### Uninitialized `letrec` and `letrec*` variables
+
+These errors are handles by the pass `handle-letrec-uninitialized`, which is run after `top-level` and before `desugar`. Handling these errors also involved establishing a special symbol in `desugar.rkt` referred to as `letrec-uninitialized-tag`. In `desugar`, `letrec`/`letrec*` variables are initialized to this symbol. Then, `handle-letrec-uninitialized` traverses the syntax tree and determines which variables could potentially be uninitialized. It wraps all references to these variables in a conditional which checks if they match `letrec-uninitialized-tag`; if they do, it raises the exception.
+
+### Part 3: "add a feature"
+
+I chose to implement additional string functionality (including character datums) for my added feature. My string and character types support Unicode by internally encoding using UTF-8. Strings are `char*` pointers to null-terminated UTF-* strings tagged with `STR_TAG`.
+
+Character values are a pointer tagged with `OTHER_TAG`. The pointer refers to a struct `utf8_char` whose first member is a `u64` tag with the value `CHAR_OTHERTAG`. The second member is a `char[5]` which holds the character as a null-terminated UTF-8 string.
+
+I implemented the following prims involving strings/chars: `string`, `string->list`, `string-length`, `string-ref`, `substring`, `string-append`, `equal?`, `string?`, and  `char?`. Each prim can be used normally or with `apply`.
+
+I also wrote these tests to test the new functionality:
+
+```
+string-0
+string-1
+string-2
+string-3
+string-4
+char-0
+unicode-0
+```
+
+### Part 4: "Boehm GC"
+
+I chose not to do this part, partially because I ran out of time (the other parts combined took about 10-12 hours), and partially because I am already doing well enough in the class that I don't think I need all the points for the final project. Hopefully, I can get credit for the first three parts as well as going above and beyond with part 3 (adding additional prims), the Unicode implementation, and GitHub upload, making my maximum potential score 20+20+30+10+8+3=91.
 
 ## Acknowledgements
 
