@@ -47,19 +47,21 @@
 (define (handle-nonprocedure-application e)
   (match e
     [(or (cons (? (one-of/c 'letrec* 'letrec 'let* 'guard 'raise 'dynamic-wind 'delay 'force 'cond
-                            'case 'and 'or 'begin 'let 'if 'when 'unless 'lambda 'quote 'apply 'prim
+                            'case 'and 'or 'begin 'let 'if 'when 'unless 'lambda 'quote 'prim
                             'call/cc 'let/cc 'apply-prim 'set!)) _)
          (? symbol?))
      (map-exps handle-nonprocedure-application e)]
     [`(apply ,(? (not/c prim?) e0) ,e1)
+     (define e0+ (handle-nonprocedure-application e0))
      (define proc-sym (gensym 'proc))
-     `(let ([,proc-sym ,e0])
+     `(let ([,proc-sym ,e0+])
         (if (prim procedure? ,proc-sym)
             ,(map-exps handle-nonprocedure-application `(apply ,proc-sym ,e1))
             (raise '(error nonprocedure-application))))]
-    [`(,(? (not/c prim?) e0) ,es ...)
+    [`(,(? (and/c (not/c prim?) (not/c (one-of/c 'apply))) e0) ,es ...)
+     (define e0+ (handle-nonprocedure-application e0))
      (define proc-sym (gensym 'proc))
-     `(let ([,proc-sym ,e0])
+     `(let ([,proc-sym ,e0+])
         (if (prim procedure? ,proc-sym)
             ,(map-exps handle-nonprocedure-application `(,proc-sym ,@es))
             (raise '(error nonprocedure-application))))]
