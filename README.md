@@ -19,7 +19,7 @@ To build the compiler and run the provided tests, do the following:
     Test and-or passed.
     ...
     ```
-    You can also see all the available tests by running `racket tests.rkt` or run a specific test by running `racket tests.rkt <test-name>`.
+    You can also see all the available tests by running `racket tests.rkt` or run a specific test by running `racket tests.rkt <test-name>`. The compiler has been tested on Mac OS X and Linux and all tests (70 in total) passed on both platforms. It should take about 10 minutes to run them all.
 
 ## Features
 
