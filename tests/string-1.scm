@@ -1,0 +1,5 @@
+(define s "Hello, world!")
+(list (substring s 2 5)
+      (substring s 4)
+      (apply substring `(,s 2 5))
+      (apply substring `(,s 4)))

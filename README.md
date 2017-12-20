@@ -1,6 +1,6 @@
 # CMSC430 Scheme compiler
 
-This is a final project for a compilers class I took at the University of Maryland. It consists of a simple Scheme compiler which supports basic features of the language and compiles to LLVM.
+This is a final project for a compilers class I took at the University of Maryland. It consists of a simple Scheme compiler which supports basic features of the language and compiles to LLVM. It is written in Racket and C/C++.
 
 ## Building and testing
 
@@ -32,9 +32,10 @@ The compiler supports a few basic types:
 | null | Null, or the empty list. |
 | boolean | Either #t or #f. |
 | int | A 32-bit signed integer. |
-| string | A string of ASCII characters. |
+| char | A Unicode character. |
+| string | A string of Unicode characters. |
 | symbol | Like a string, but any two symbols with the same name always refer to the same value. |
-| cons cell | A pair of two values. Cons cells can be chained to form a list. |
+| cons cell | A pair of two values. Cons cells can be chained to form a linked list. |
 | vector | An array of values. |
 | procedure | A closure that can be called on zero or more arguments. |
 
@@ -50,6 +51,8 @@ These are the built-in operations that can be used to interact with the basic ty
 (cons? v) -> boolean
 (number? v) -> boolean
 (integer? v) -> boolean
+(char? v) -> boolean
+(string? v) -> boolean
 (symbol? v) -> boolean
 (vector? v) -> boolean
 (procedure? v) -> boolean
@@ -103,6 +106,44 @@ Takes two or more integers and subtracts from the first integer all that follow,
 ```
 
 These are equivalent. Each takes a list of integers and divides the first integer by all subsequent integers, returning the result rounded down.
+
+#### Strings
+
+```
+(string c ...) -> string
+```
+
+Takes any number of characters and constructs a string from them in sequence.
+
+```
+(string->list s) -> list
+```
+
+Takes a string and returns a list of all the characters in the string.
+
+```
+(string-length s) -> integer
+```
+
+Takes a string and returns the number of characters in the string.
+
+```
+(string-ref s n) -> char
+```
+
+Takes a string and a non-negative integer n and returns the nth character in the string.
+
+```
+(substring s n [m]) -> string
+```
+
+Takes a string and one or two integers. A substring is taken starting at the nth character and ending before the mth character (or ending at the end of the string if m is omitted). For instance, `(substring "abcde" 1 3)` returns `"bcd"` while `(substring "abcde" 2)` returns `"cde"`.
+
+```
+(string-append s ...) -> string
+```
+
+Takes any number of strings and appends them together, returning the concatenated result.
 
 #### Lists and cons cells
 
@@ -184,7 +225,7 @@ Returns a vector created from the given values.
 (make-vector n v) -> vector
 ```
 
-Takes a non-negative integer n and a value v. Returns a vector of length n with the all elements set to v.
+Takes a non-negative integer n and a value v. Returns a vector of length n with all the elements set to v.
 
 ```
 (vector-ref v n) -> vector
@@ -220,6 +261,10 @@ Prints the given value and halts the program.
 
 ## How it works
 
-#### Academic integrity statement
+## Acknowledgements
+
+Some of the compiler code is taken from [Thomas Gilray's fall 2017 CMSC430 class](http://cs.umd.edu/class/fall2017/cmsc430/).
+
+### Academic integrity statement
 
 I, Cassidy Laidlaw, pledge on my honor that I have not given or received any unauthorized assistance on this assignment.

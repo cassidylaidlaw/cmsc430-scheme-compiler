@@ -168,20 +168,21 @@
   (define (add-global decl)
     (set! globals (cons decl globals)))
   (define (add-global-string s)
-    (define strlen (string-length s))
+    (define encoded-str (string->bytes/utf-8 s))
+    (define bytes-len (bytes-length encoded-str))
     (define sname (gensym 'str))
-    (define escaped-str (string-join (map (lambda (c)
+    (define escaped-str (string-join (map (lambda (b)
                                             (string-append "\\"
-                                                           (~r (char->integer c)
+                                                           (~r b
                                                                #:base '(up 16)
                                                                #:pad-string "0"
                                                                #:min-width 2)))
-                                          (string->list s))
+                                          (bytes->list encoded-str))
                                      ""))
     (begin
       (add-global (format "@~a = constant [~a x i8] c\"~a\\00\", align 8\n"
                           (symbol->llvm-val sname)
-                          (+ strlen 1)
+                          (+ bytes-len 1)
                           escaped-str))
       sname))
   (define (encode-int i)
@@ -304,6 +305,8 @@
        (format "%~a = call i64 @const_init_int(i64 ~a)\n" (symbol->llvm-val x) i)]
       [(? symbol? s)
        (T-str x (symbol->string s) 'symbol)]
+      [(? char? c)
+       (T-str x (string c) 'char)]
       ['()
        (format "%~a = call i64 @const_init_null()\n" (symbol->llvm-val x))]
       [#t
@@ -315,15 +318,15 @@
       (if (and (eq? str-type 'symbol) (hash-has-key? interned-symbols s))
           (hash-ref interned-symbols s)
           (add-global-string s)))
-    (define strlen+1 (+ (string-length s) 1))
+    (define bytes-len+1 (+ (bytes-length (string->bytes/utf-8 s)) 1))
     (begin
       (set! interned-symbols (hash-set interned-symbols s sname))
       (format "%~a = call i64 @const_init_~a(\
 i8* getelementptr inbounds ([~a x i8], [~a x i8]* @~a, i32 0, i32 0))\n"
               (symbol->llvm-val x)
               (symbol->string str-type)
-              strlen+1
-              strlen+1
+              bytes-len+1
+              bytes-len+1
               (symbol->llvm-val sname))))
 
   (define globals '())

@@ -48,10 +48,10 @@
                      cons? null? cons car cdr list first second third fourth fifth list
                      length drop take memv map append foldl foldr
                      vector? vector make-vector vector-ref vector-set! vector-length
-                     string-length substring string->symbol symbol->string string-append
+                     string string-length substring string->list string-append string-ref
                      set set->list list->set set-add set-union set-count set-first set-rest set-remove
                      hash hash-ref hash-set hash-count hash-keys hash-has-key? hash?
-                     list? symbol? void? promise? procedure? number? integer? natural?
+                     list? symbol? void? promise? procedure? number? integer? natural? char? string?
                      error void print display displayln write exit halt eval
                      eq? eqv? equal? not))
 (define ok-set (list->set (string->list "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$")))
@@ -89,6 +89,7 @@
          [(? string?) #t]
          [(? integer?) #t]
          [(? symbol?) #t]
+         [(? char?) #t]
          [(? boolean?) #t]
          [else (pretty-print `(bad-datum ,d)) #f]))
 
@@ -352,6 +353,8 @@
      s]
     [(? boolean? b)
      b]
+    [(? char? c)
+     c]
     [`(apply ,e0 ,e1)
      `(apply ,(f e0) ,(f e1))]
     [`(,es ...)
@@ -416,13 +419,20 @@
            [`(prim map ,e0 ,e1)
             `(%map1 ,@(map T (list e0 e1)))]
 
+           ; Simplify string operations
+           [`(prim substring ,e0 ,e1)
+            (T `(prim substring ,e0 ,e1 '-1))]
+           [`(prim ,op ,es ...)
+            #:when (member op '(string string-append))
+            (T `(apply-prim ,op (prim list ,@es)))]
+
            [`(prim ,op ,es ...)
             #:when (member op '(drop memv / > >= list? drop-right length append last
-                                     map foldl foldr first second third fourth))
+                                take map foldl foldr first second third fourth))
             `(,(string->symbol (string-append "%" (symbol->string op))) ,@(map T es))]
            [`(apply-prim ,op ,e0)
             #:when (member op '(drop memv / > >= list? drop-right length append last
-                                     map foldl foldr first second third fourth))
+                                take map foldl foldr first second third fourth))
             `(apply ,(string->symbol (string-append "%" (symbol->string op))) ,(T e0))]
                       
            [`(prim ,op ,es ...)

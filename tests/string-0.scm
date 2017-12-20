@@ -1,0 +1,23 @@
+(define s0 "testing, testing, 1 2 3... ")
+(define s1 "hélo my frîen∂ ")
+(define s2 "משהו בעברית ")
+(define s3 "编译器很有趣")
+(define strs (list s0 s1 s2 s3))
+
+(define (range n m)
+  (if (= n m)
+      '()
+      (cons n (range (+ n 1) m))))
+
+(list (map string-length strs)
+      (map (lambda (s) (map (lambda (n) (string-ref s n)) '(1 4 6 10))) (take strs 3))
+      (map (lambda (s)
+             (let ([l (string-length s)])
+               (map (lambda (n) (cons (substring s n)
+                                      (map (lambda (m) (substring s n m)) (range n l))))
+                    (range 0 l))))
+           strs)
+      (map string->list strs)
+      (map (lambda (s) (apply string (string->list s))) strs)
+      (apply string-append strs))
+
