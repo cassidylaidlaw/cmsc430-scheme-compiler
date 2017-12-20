@@ -740,6 +740,9 @@
             ; use a read to turn the printed value back into a racket value
             (let ([v (eval (read out-port) (make-base-namespace))])
               (callback 'kill)
+              (close-input-port out-port)
+              (close-output-port in-port)
+              (close-input-port err-port)
               v)
             (if (eq? status 'done-error)
                 (begin (pretty-print '(eval-llvm "bad status code")) (void))           
