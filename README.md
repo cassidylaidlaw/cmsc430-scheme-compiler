@@ -1,6 +1,8 @@
 # CMSC430 Scheme compiler
 
-This is a final project for a compilers class I took at the University of Maryland. It consists of a simple Scheme compiler which supports basic features of the language and compiles to LLVM. It is written in Racket and C/C++.
+This is a final project for a compilers class, [CMSC430](http://cs.umd.edu/class/fall2017/cmsc430/), that I took at the University of Maryland. It consists of a simple Scheme compiler which supports basic features of the language and compiles to LLVM. It is written in Racket and C/C++.
+
+This documentation is divided into three sections. The first, "building and testing," describes how to build the compiler and run the tests. The second, "features," describes the built-in types, primitive operations, and runtime exceptions that compiler supports. The third, "notes on the final project," has a short write-up about each section of the project.
 
 ## Building and testing
 
@@ -21,7 +23,7 @@ To build the compiler and run the provided tests, do the following:
 
 ## Features
 
-Here is an overview of the basic types and primitive operations associated with those types that the compiler supports.
+Here is an overview of the basic types, primitive operations associated with those types, and runtime exceptions that the compiler supports.
 
 ### Basic types
 
@@ -343,11 +345,11 @@ These errors are handles by the pass `handle-letrec-uninitialized`, which is run
 
 ### Part 3: "add a feature"
 
-I chose to implement additional string functionality (including character datums) for my added feature. My string and character types support Unicode by internally encoding using UTF-8. Strings are `char*` pointers to null-terminated UTF-* strings tagged with `STR_TAG`.
+I chose to implement additional string functionality (including character datums) for my added feature. My string and character types support Unicode by internally encoding using UTF-8. Strings are `char*` pointers tagged with `STR_TAG`; they point to null-terminated UTF-8 strings.
 
 Character values are a pointer tagged with `OTHER_TAG`. The pointer refers to a struct `utf8_char` whose first member is a `u64` tag with the value `CHAR_OTHERTAG`. The second member is a `char[5]` which holds the character as a null-terminated UTF-8 string.
 
-I implemented the following prims involving strings/chars: `string`, `string->list`, `string-length`, `string-ref`, `substring`, `string-append`, `equal?`, `string?`, and  `char?`. Each prim can be used normally or with `apply`.
+I implemented the following prims involving strings/chars: `string`, `string->list`, `string-length`, `string-ref`, `substring`, `string-append`, `equal?`, `string?`, and  `char?`. Each prim can be used directly or with `apply`.
 
 I also wrote these tests to test the new functionality:
 
@@ -368,6 +370,8 @@ I chose not to do this part, partially because I ran out of time (the other part
 ## Acknowledgements
 
 Some of the compiler code is taken from [Thomas Gilray's fall 2017 CMSC430 class](http://cs.umd.edu/class/fall2017/cmsc430/).
+
+Unicode support uses code from http://www.zedwood.com.
 
 ### Academic integrity statement
 
