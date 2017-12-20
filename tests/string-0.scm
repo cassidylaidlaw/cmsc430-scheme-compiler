@@ -19,5 +19,6 @@
            strs)
       (map string->list strs)
       (map (lambda (s) (apply string (string->list s))) strs)
+      (map (lambda (s) (equal? (apply string (string->list s)) s)) strs)
       (apply string-append strs))
 
